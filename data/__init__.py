@@ -5,7 +5,7 @@ import numpy as np
 
 
 class CustomDataset(Dataset):
-    def __init__(self, scans, ground_truth, transforms):
+    def __init__(self, scans, ground_truth, transforms=None):
         super(CustomDataset, self).__init__()
         self.scan_file = sorted(glob.glob(scans + '*.png'))
         self.truth_file = sorted(glob.glob(ground_truth+"*.png"))
@@ -27,7 +27,6 @@ class CustomDataset(Dataset):
         if self.transforms:
             try:
                 img, ground_truth = self.transforms((img, ground_truth))
-
             except Exception:
                 print("Could not apply transform.")
                 return
