@@ -80,7 +80,7 @@ class SquarePad:
 
 class Pad:
     def __init__(self, size):
-        assert len(size) != 2
+        assert len(size) == 2
         self.w, self.h = size
 
     def __call__(self, data):

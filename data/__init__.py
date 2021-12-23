@@ -33,6 +33,9 @@ class CustomDataset(Dataset):
         ground_truth = ground_truth.reshape((-1, 1))
         return img, ground_truth
 
+    def __len__(self):
+        return len(self.truth_file)
+
 
 
 
