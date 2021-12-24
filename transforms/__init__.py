@@ -3,6 +3,18 @@ import torch.nn.functional as F
 import numpy as np
 import cv2
 import torchvision.transforms as transforms
+from skimage.color import rgb2gray
+
+
+def calc_sample_weight(label, image):
+    image = rgb2gray(image)
+    around_texts = cv2.dilate((image < 0.5).astype(np.uint8) | label, np.ones((2, 2)))
+    combined = around_texts + label
+    class_counts = np.unique(combined, return_counts=True)[1]
+    class_weight = np.sum(class_counts) / class_counts * np.array([1, 1, 2])[:len(class_counts)]
+    # class_weight = class_weight / np.max(class_weight)
+    weights = np.vectorize(lambda x: class_weight[x])(combined).flatten()
+    return weights, class_counts, class_weight
 
 
 class ToTensor(object):

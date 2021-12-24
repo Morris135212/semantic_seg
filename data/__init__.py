@@ -7,8 +7,10 @@ import numpy as np
 class CustomDataset(Dataset):
     def __init__(self, scans, ground_truth, transforms=None):
         super(CustomDataset, self).__init__()
-        self.scan_file = sorted(glob.glob(scans + '*.png'))
-        self.truth_file = sorted(glob.glob(ground_truth+"*.png"))
+        # self.scan_file = sorted(glob.glob(scans + '*.png'))
+        self.scan_file = scans
+        # self.truth_file = sorted(glob.glob(ground_truth+"*.png"))
+        self.truth_file = ground_truth
         self.transforms = transforms
 
     def __getitem__(self, index):
