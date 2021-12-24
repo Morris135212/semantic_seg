@@ -18,19 +18,21 @@ class CustomDataset(Dataset):
         except Exception:
             print(f"Can not read img_path {img_path}")
             return
-        truth_path = self.truth_file[index % len(self.truth_file)].restrip()
+        truth_path = self.truth_file[index % len(self.truth_file)].rstrip()
         try:
             ground_truth = np.array(Image.open(truth_path).convert('RGB'), dtype=np.uint8)
         except Exception:
             print(f"Can not read Ground truth {truth_path}")
             return
         if self.transforms:
-            try:
-                img, ground_truth = self.transforms((img, ground_truth))
-            except Exception:
-                print("Could not apply transform.")
-                return
-        ground_truth = ground_truth.reshape((-1, 1))
+            img, ground_truth = self.transforms((img, ground_truth))
+            # try:
+            #     img, ground_truth = self.transforms((img, ground_truth))
+            # except Exception as e:
+            #     print("Could not apply transform.")
+            #     print(e)
+            #     return
+        ground_truth = ground_truth.view((-1, 1))
         return img, ground_truth
 
     def __len__(self):

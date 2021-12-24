@@ -36,7 +36,7 @@ class AddPepperNoise(object):
         p (float): 概率值，依概率执行该操作
     """
 
-    def __init__(self, snr, p=0.9):
+    def __init__(self, snr, p=0.8):
         assert isinstance(snr, float) or (isinstance(p, float))
         self.snr = snr
         self.p = p
@@ -79,12 +79,17 @@ class SquarePad:
 
 
 class Pad:
-    def __init__(self, size):
-        assert len(size) == 2
-        self.w, self.h = size
+    def __init__(self, size=None):
+        if size:
+            assert len(size) == 2
+            self.w, self.h = size
+        else:
+            self.w, self.h = None, None
 
     def __call__(self, data):
         img, ground = data
+        if not self.w:
+            self.w = self.h = max(img.shape[0], img.shape[1])
         img = img / 255
         img = cv2.copyMakeBorder(img,
                                  (self.w - img.shape[0]) // 2,
@@ -104,13 +109,40 @@ class Pad:
         return img, ground
 
 
+class ToPILImage:
+    def __init__(self):
+        pass
+
+    def __call__(self, data):
+        img, ground = data
+        img = transforms.ToPILImage()(img)
+        ground = transforms.ToPILImage()(ground)
+        return img, ground
+
+
+class Resize:
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+
+    def __call__(self, data):
+        img, ground = data
+        img = cv2.resize(img, (self.w, self.h))
+        ground = cv2.resize(ground, (self.w, self.h))
+        return img, ground
+
+
 default_transform = {"train": transforms.Compose([
-    Pad((2302, 1632)),
-    ColorJitter(0.5),
-    AddPepperNoise(snr=0.7),
+    AddPepperNoise(snr=0.95),
+    Pad(),
+    # ToPILImage(),
+    Resize(224, 224),
+    # ColorJitter(0.5),
     ToTensor()
 ]),
     "val": transforms.Compose([
-        Pad((2302, 1632)),
+        Pad(),
+        # ToPILImage(),
+        Resize(224, 224),
         ToTensor()
     ])}
