@@ -34,7 +34,8 @@ class CustomDataset(Dataset):
             #     print("Could not apply transform.")
             #     print(e)
             #     return
-        ground_truth = ground_truth.view((-1, 1))
+        ground_truth = ground_truth.view((-1,))
+        ground_truth[ground_truth > 0] = 1
         return img, ground_truth
 
     def __len__(self):

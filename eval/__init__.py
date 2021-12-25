@@ -16,13 +16,14 @@ class Evaluator:
         total_loss = 0.
         length = 0
         with torch.no_grad():
-            for i, data in enumerate(tqdm(self.val_loader), 0):
+            for i, data in enumerate(self.val_loader, 0):
                 img, ground = data
                 # img = img.float().to(self.device)
                 img = Variable(img.float()).to(self.device)
                 ground = Variable(ground).to(self.device)
-                output = self.model(img).view((output.shape[0], -1))
-                total_loss += self.criterion(output, ground.squeeze())
+                output = self.model(img)
+                output = output.view((output.shape[0], -1))
+                total_loss += self.criterion(output, ground.squeeze())*img.shape[0]
                 length += img.shape[0]
             del img, ground
         return {"loss": total_loss/length}

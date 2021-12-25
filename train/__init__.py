@@ -19,7 +19,7 @@ class Trainer:
                  batch_size=32,
                  epochs=10,
                  optimizer="adam",
-                 lr=1e-3,
+                 lr=1e-2,
                  momentum=0.5,
                  step_size=20,
                  interval=1,
