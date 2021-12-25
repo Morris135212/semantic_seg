@@ -4,7 +4,6 @@ import numpy as np
 import cv2
 import torchvision.transforms as transforms
 from skimage.color import rgb2gray
-from collections import Counter
 
 
 def calc_sample_weight(label, image):
