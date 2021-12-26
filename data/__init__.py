@@ -6,14 +6,13 @@ import numpy as np
 
 
 class CustomDataset(Dataset):
-    def __init__(self, scans, ground_truth, transforms=None, resize=False):
+    def __init__(self, scans, ground_truth, transforms=None):
         super(CustomDataset, self).__init__()
         # self.scan_file = sorted(glob.glob(scans + '*.png'))
         self.scan_file = scans
         # self.truth_file = sorted(glob.glob(ground_truth+"*.png"))
         self.truth_file = ground_truth
         self.transforms = transforms
-        self.resize = resize
 
     def __getitem__(self, index):
         img_path = self.scan_file[index % len(self.scan_file)].rstrip()
@@ -29,7 +28,7 @@ class CustomDataset(Dataset):
             print(f"Can not read Ground truth {truth_path}")
             return
         if self.transforms:
-            img, ground_truth = self.transforms((img, ground_truth))
+            img, ground_truth, weight = self.transforms((img, ground_truth))
             # try:
             #     img, ground_truth = self.transforms((img, ground_truth))
             # except Exception as e:
@@ -37,9 +36,7 @@ class CustomDataset(Dataset):
             #     print(e)
             #     return
         ground_truth = ground_truth.view((-1,))
-        if self.resize:
-            ground_truth[ground_truth > 0] = 1
-        return img, ground_truth
+        return img, ground_truth, weight
 
     def __len__(self):
         return len(self.truth_file)

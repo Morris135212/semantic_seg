@@ -1,11 +1,9 @@
 import torch.nn
 from torch.autograd import Variable
-from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 
 class Evaluator:
-    def __init__(self, val_loader, model, device, criterion=torch.nn.BCELoss()):
+    def __init__(self, val_loader, model, device, criterion=torch.nn.BCEWithLogitsLoss()):
         self.val_loader = val_loader
         self.model = model
         self.model.eval()

@@ -34,7 +34,7 @@ class Trainer:
         self.epochs = epochs
         # Loss function
         # self.criterion = torch.nn.CrossEntropyLoss().to(device=self.device)
-        self.criterion = torch.nn.BCELoss().to(device=self.device)
+        # self.criterion = torch.nn.BCELoss().to(device=self.device)
         # Model
         self.model = model.to(device=self.device)
         # Optimizer
@@ -55,12 +55,14 @@ class Trainer:
             length = 0
             for i, data in enumerate(tqdm(self.train_loader), 0):
                 self.model.train()
-                img, ground = data
+                img, ground, weight = data
+                weight = weight.to(self.device)
+                criterion = torch.nn.BCEWithLogitsLoss(pos_weight=weight).to(self.device)
                 img = Variable(img.float()).to(self.device)
                 ground = Variable(ground.float()).to(self.device)
                 output = self.model(img)
                 output = output.view((output.shape[0], -1))
-                loss = self.criterion(torch.sigmoid(output), ground)
+                loss = criterion(output, ground)
                 epoch_loss += loss.item()*ground.shape[0]
                 length += ground.shape[0]
 
@@ -72,8 +74,7 @@ class Trainer:
                 if i % self.interval == self.interval - 1:
                     evaluator = Evaluator(val_loader=self.val_loader,
                                           model=self.model,
-                                          device=self.device,
-                                          criterion=self.criterion)
+                                          device=self.device)
                     results = evaluator()
                     loss = results["loss"]
                     print(f"train loss: {epoch_loss / length}, eval loss: {loss}", flush=True)

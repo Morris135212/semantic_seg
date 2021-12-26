@@ -25,12 +25,19 @@ class ToTensor(object):
         pass
 
     def __call__(self, data):
-        img, ground = data
+        if len(data) == 3:
+            img, ground, weight = data
+        else:
+            img, ground = data
         # Extract image as PyTorch tensor
         img = torch.from_numpy(img)
         img = img.permute(2, 0, 1)
         ground = torch.from_numpy(ground)
-        return img, ground
+        if len(data) == 3:
+            weight = torch.from_numpy(weight)
+            return img, ground, weight
+        else:
+            return img, ground
 
 
 class ColorJitter:
@@ -62,7 +69,7 @@ class AddPepperNoise(object):
         Returns:
             PIL Image: PIL image.
         """
-        img, ground = data
+        img, ground, weight = data
         if random.uniform(0, 1) < self.p:  # 概率的判断
             img_ = img.copy()  # 转化为numpy的形式
             h, w, c = img_.shape  # 获取图像的高，宽，channel的数量
@@ -74,9 +81,9 @@ class AddPepperNoise(object):
             mask = np.repeat(mask, c, axis=2)  # 将mask在最高轴上（2轴）上复制channel次。
             img_[mask == 1] = 255  # 盐噪声
             img_[mask == 2] = 0  # 椒噪声
-            return img_, ground  # 转化成pil_img的形式
+            return img_, ground, weight  # 转化成pil_img的形式
         else:
-            return img, ground
+            return img, ground, weight
 
 
 class SquarePad:
@@ -159,7 +166,8 @@ class Jitter:
         M = cv2.getPerspectiveTransform(pts1, pts2)
         img = cv2.warpPerspective(img, M, (self.size[1], self.size[0]), borderValue=(1, 1, 1))
         ground = cv2.warpPerspective(ground, M, (self.size[1], self.size[0]), flags=cv2.INTER_NEAREST, borderValue=0)
-        return img, ground
+        weight, _, _ = calc_sample_weight(ground, img)
+        return img, ground, weight
 
 
 class Resize:
