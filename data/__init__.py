@@ -1,17 +1,19 @@
 from PIL import Image
 from torch.utils.data import Dataset
+from collections import Counter
 import glob
 import numpy as np
 
 
 class CustomDataset(Dataset):
-    def __init__(self, scans, ground_truth, transforms=None):
+    def __init__(self, scans, ground_truth, transforms=None, resize=False):
         super(CustomDataset, self).__init__()
         # self.scan_file = sorted(glob.glob(scans + '*.png'))
         self.scan_file = scans
         # self.truth_file = sorted(glob.glob(ground_truth+"*.png"))
         self.truth_file = ground_truth
         self.transforms = transforms
+        self.resize = resize
 
     def __getitem__(self, index):
         img_path = self.scan_file[index % len(self.scan_file)].rstrip()
@@ -35,7 +37,8 @@ class CustomDataset(Dataset):
             #     print(e)
             #     return
         ground_truth = ground_truth.view((-1,))
-        ground_truth[ground_truth > 0] = 1
+        if self.resize:
+            ground_truth[ground_truth > 0] = 1
         return img, ground_truth
 
     def __len__(self):

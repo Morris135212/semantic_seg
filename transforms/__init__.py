@@ -1,9 +1,12 @@
 import random
+
+import torch
 import torch.nn.functional as F
 import numpy as np
 import cv2
 import torchvision.transforms as transforms
 from skimage.color import rgb2gray
+from collections import Counter
 
 
 def calc_sample_weight(label, image):
@@ -24,10 +27,9 @@ class ToTensor(object):
     def __call__(self, data):
         img, ground = data
         # Extract image as PyTorch tensor
-        img = transforms.ToTensor()(img)
-
-        ground = transforms.ToTensor()(ground)
-
+        img = torch.from_numpy(img)
+        img = img.permute(2, 0, 1)
+        ground = torch.from_numpy(ground)
         return img, ground
 
 
@@ -48,7 +50,7 @@ class AddPepperNoise(object):
         p (float): 概率值，依概率执行该操作
     """
 
-    def __init__(self, snr, p=0.8):
+    def __init__(self, snr, p=0.5):
         assert isinstance(snr, float) or (isinstance(p, float))
         self.snr = snr
         self.p = p
@@ -132,6 +134,34 @@ class ToPILImage:
         return img, ground
 
 
+class AddNoise:
+    def __init__(self, gamma_lower=0.8, gamma_upper=1.25):
+        assert gamma_upper > gamma_lower
+        self.gamma_lower = gamma_lower
+        self.gamma_upper = gamma_upper
+
+    def __call__(self, data):
+        img, ground = data
+        img = img ** np.random.uniform(self.gamma_lower, self.gamma_upper)
+        return img, ground
+
+
+class Jitter:
+    def __init__(self, size=(2302, 1632), jitter_range=50):
+        self.size = size
+        self.jitter_range = jitter_range
+
+    def __call__(self, data):
+        img, ground = data
+        jitter = np.random.uniform(0, self.jitter_range, (4, 2)).astype(np.float32)
+        pts1 = np.array(((0, 0), (self.size[1], 0), (0, self.size[0]), (self.size[1], self.size[0]))).astype(np.float32)
+        pts2 = pts1 + jitter
+        M = cv2.getPerspectiveTransform(pts1, pts2)
+        img = cv2.warpPerspective(img, M, (self.size[1], self.size[0]), borderValue=(1, 1, 1))
+        ground = cv2.warpPerspective(ground, M, (self.size[1], self.size[0]), flags=cv2.INTER_NEAREST, borderValue=0)
+        return img, ground
+
+
 class Resize:
     def __init__(self, w, h):
         self.w = w
@@ -145,16 +175,13 @@ class Resize:
 
 
 default_transform = {"train": transforms.Compose([
+    Pad(size=(2302, 1632)),
+    AddNoise(),
+    Jitter(size=(2302, 1632), jitter_range=50),
     AddPepperNoise(snr=0.95),
-    Pad(),
-    # ToPILImage(),
-    Resize(224, 224),
-    # ColorJitter(0.5),
     ToTensor()
 ]),
     "val": transforms.Compose([
-        Pad(),
-        # ToPILImage(),
-        Resize(224, 224),
+        Pad(size=(2302, 1632)),
         ToTensor()
     ])}

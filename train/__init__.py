@@ -33,7 +33,8 @@ class Trainer:
         self.batch_size = batch_size
         self.epochs = epochs
         # Loss function
-        self.criterion = torch.nn.CrossEntropyLoss().to(device=self.device)
+        # self.criterion = torch.nn.CrossEntropyLoss().to(device=self.device)
+        self.criterion = torch.nn.BCELoss().to(device=self.device)
         # Model
         self.model = model.to(device=self.device)
         # Optimizer
@@ -56,10 +57,10 @@ class Trainer:
                 self.model.train()
                 img, ground = data
                 img = Variable(img.float()).to(self.device)
-                ground = Variable(ground).to(self.device)
+                ground = Variable(ground.float()).to(self.device)
                 output = self.model(img)
                 output = output.view((output.shape[0], -1))
-                loss = self.criterion(output, ground.squeeze())
+                loss = self.criterion(torch.sigmoid(output), ground)
                 epoch_loss += loss.item()*ground.shape[0]
                 length += ground.shape[0]
 
@@ -75,7 +76,7 @@ class Trainer:
                                           criterion=self.criterion)
                     results = evaluator()
                     loss = results["loss"]
-                    print(f"train loss: {epoch_loss / length}, eval loss: {loss}")
+                    print(f"train loss: {epoch_loss / length}, eval loss: {loss}", flush=True)
                     self.early_stopping(loss, self.model)
             if self.early_stopping.early_stop:
                 break
