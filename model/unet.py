@@ -100,20 +100,20 @@ class U_Net(nn.Module):
         e5 = self.Conv5(e5)
 
         d5 = self.Up5(e5)
-        d5 = torch.cat((e4, d5), dim=1)
+        d5 = torch.cat((e4, d5), dim=-3)
 
         d5 = self.Up_conv5(d5)
 
         d4 = self.Up4(d5)
-        d4 = torch.cat((e3, d4), dim=1)
+        d4 = torch.cat((e3, d4), dim=-3)
         d4 = self.Up_conv4(d4)
 
         d3 = self.Up3(d4)
-        d3 = torch.cat((e2, d3), dim=1)
+        d3 = torch.cat((e2, d3), dim=-3)
         d3 = self.Up_conv3(d3)
 
         d2 = self.Up2(d3)
-        d2 = torch.cat((e1, d2), dim=1)
+        d2 = torch.cat((e1, d2), dim=-3)
         d2 = self.Up_conv2(d2)
 
         out = self.Conv(d2)
@@ -229,19 +229,19 @@ class R2U_Net(nn.Module):
         e5 = self.RRCNN5(e5)
 
         d5 = self.Up5(e5)
-        d5 = torch.cat((e4, d5), dim=1)
+        d5 = torch.cat((e4, d5), dim=-3)
         d5 = self.Up_RRCNN5(d5)
 
         d4 = self.Up4(d5)
-        d4 = torch.cat((e3, d4), dim=1)
+        d4 = torch.cat((e3, d4), dim=-3)
         d4 = self.Up_RRCNN4(d4)
 
         d3 = self.Up3(d4)
-        d3 = torch.cat((e2, d3), dim=1)
+        d3 = torch.cat((e2, d3), dim=-3)
         d3 = self.Up_RRCNN3(d3)
 
         d2 = self.Up2(d3)
-        d2 = torch.cat((e1, d2), dim=1)
+        d2 = torch.cat((e1, d2), dim=-3)
         d2 = self.Up_RRCNN2(d2)
 
         out = self.Conv(d2)
@@ -348,22 +348,22 @@ class AttU_Net(nn.Module):
         d5 = self.Up5(e5)
         # print(d5.shape)
         x4 = self.Att5(g=d5, x=e4)
-        d5 = torch.cat((x4, d5), dim=1)
+        d5 = torch.cat((x4, d5), dim=-3)
         d5 = self.Up_conv5(d5)
 
         d4 = self.Up4(d5)
         x3 = self.Att4(g=d4, x=e3)
-        d4 = torch.cat((x3, d4), dim=1)
+        d4 = torch.cat((x3, d4), dim=-3)
         d4 = self.Up_conv4(d4)
 
         d3 = self.Up3(d4)
         x2 = self.Att3(g=d3, x=e2)
-        d3 = torch.cat((x2, d3), dim=1)
+        d3 = torch.cat((x2, d3), dim=-3)
         d3 = self.Up_conv3(d3)
 
         d2 = self.Up2(d3)
         x1 = self.Att2(g=d2, x=e1)
-        d2 = torch.cat((x1, d2), dim=1)
+        d2 = torch.cat((x1, d2), dim=-3)
         d2 = self.Up_conv2(d2)
 
         out = self.Conv(d2)
@@ -433,22 +433,22 @@ class R2AttU_Net(nn.Module):
 
         d5 = self.Up5(e5)
         e4 = self.Att5(g=d5, x=e4)
-        d5 = torch.cat((e4, d5), dim=1)
+        d5 = torch.cat((e4, d5), dim=-3)
         d5 = self.Up_RRCNN5(d5)
 
         d4 = self.Up4(d5)
         e3 = self.Att4(g=d4, x=e3)
-        d4 = torch.cat((e3, d4), dim=1)
+        d4 = torch.cat((e3, d4), dim=-3)
         d4 = self.Up_RRCNN4(d4)
 
         d3 = self.Up3(d4)
         e2 = self.Att3(g=d3, x=e2)
-        d3 = torch.cat((e2, d3), dim=1)
+        d3 = torch.cat((e2, d3), dim=-3)
         d3 = self.Up_RRCNN3(d3)
 
         d2 = self.Up2(d3)
         e1 = self.Att2(g=d2, x=e1)
-        d2 = torch.cat((e1, d2), dim=1)
+        d2 = torch.cat((e1, d2), dim=-3)
         d2 = self.Up_RRCNN2(d2)
 
         out = self.Conv(d2)
@@ -524,22 +524,22 @@ class NestedUNet(nn.Module):
     def forward(self, x):
         x0_0 = self.conv0_0(x)
         x1_0 = self.conv1_0(self.pool(x0_0))
-        x0_1 = self.conv0_1(torch.cat([x0_0, self.Up(x1_0)], 1))
+        x0_1 = self.conv0_1(torch.cat([x0_0, self.Up(x1_0)], -3))
 
         x2_0 = self.conv2_0(self.pool(x1_0))
-        x1_1 = self.conv1_1(torch.cat([x1_0, self.Up(x2_0)], 1))
-        x0_2 = self.conv0_2(torch.cat([x0_0, x0_1, self.Up(x1_1)], 1))
+        x1_1 = self.conv1_1(torch.cat([x1_0, self.Up(x2_0)], -3))
+        x0_2 = self.conv0_2(torch.cat([x0_0, x0_1, self.Up(x1_1)], -3))
 
         x3_0 = self.conv3_0(self.pool(x2_0))
-        x2_1 = self.conv2_1(torch.cat([x2_0, self.Up(x3_0)], 1))
-        x1_2 = self.conv1_2(torch.cat([x1_0, x1_1, self.Up(x2_1)], 1))
-        x0_3 = self.conv0_3(torch.cat([x0_0, x0_1, x0_2, self.Up(x1_2)], 1))
+        x2_1 = self.conv2_1(torch.cat([x2_0, self.Up(x3_0)], -3))
+        x1_2 = self.conv1_2(torch.cat([x1_0, x1_1, self.Up(x2_1)], -3))
+        x0_3 = self.conv0_3(torch.cat([x0_0, x0_1, x0_2, self.Up(x1_2)], -3))
 
         x4_0 = self.conv4_0(self.pool(x3_0))
-        x3_1 = self.conv3_1(torch.cat([x3_0, self.Up(x4_0)], 1))
-        x2_2 = self.conv2_2(torch.cat([x2_0, x2_1, self.Up(x3_1)], 1))
-        x1_3 = self.conv1_3(torch.cat([x1_0, x1_1, x1_2, self.Up(x2_2)], 1))
-        x0_4 = self.conv0_4(torch.cat([x0_0, x0_1, x0_2, x0_3, self.Up(x1_3)], 1))
+        x3_1 = self.conv3_1(torch.cat([x3_0, self.Up(x4_0)], -3))
+        x2_2 = self.conv2_2(torch.cat([x2_0, x2_1, self.Up(x3_1)], -3))
+        x1_3 = self.conv1_3(torch.cat([x1_0, x1_1, x1_2, self.Up(x2_2)], -3))
+        x0_4 = self.conv0_4(torch.cat([x0_0, x0_1, x0_2, x0_3, self.Up(x1_3)], -3))
 
         output = self.final(x0_4)
         return output
