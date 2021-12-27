@@ -186,7 +186,7 @@ default_transform = {"train": transforms.Compose([
     Pad(size=(2302, 1632)),
     AddNoise(),
     Jitter(size=(2302, 1632), jitter_range=50),
-    AddPepperNoise(snr=0.95),
+    AddPepperNoise(snr=0.98),
     ToTensor()
 ]),
     "val": transforms.Compose([

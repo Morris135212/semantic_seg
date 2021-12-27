@@ -24,6 +24,7 @@ class Trainer:
                  step_size=20,
                  interval=1,
                  patience=20,
+                 include_weight=True,
                  path="output/checkpoints/checkpoint.pt"):
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         train_data = CustomDataset(train[0], train[1], transforms.default_transform["train"])
@@ -45,6 +46,7 @@ class Trainer:
 
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optim, step_size=step_size, gamma=0.5)
         self.interval = interval
+        self.include_weight = include_weight
         self.early_stopping = EarlyStopping(patience=patience, verbose=True, path=path)
 
     def __call__(self, *args, **kwargs):
@@ -56,8 +58,11 @@ class Trainer:
             for i, data in enumerate(tqdm(self.train_loader), 0):
                 self.model.train()
                 img, ground, weight = data
-                weight = weight.to(self.device)
-                criterion = torch.nn.BCEWithLogitsLoss(pos_weight=weight).to(self.device)
+                if self.include_weight:
+                    weight = weight.to(self.device)
+                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=weight).to(self.device)
+                else:
+                    criterion = torch.nn.BCEWithLogitsLoss().to(self.device)
                 img = Variable(img.float()).to(self.device)
                 ground = Variable(ground.float()).to(self.device)
                 output = self.model(img)

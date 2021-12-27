@@ -1,5 +1,13 @@
 import torch.nn
 from torch.autograd import Variable
+from sklearn.metrics import accuracy_score
+
+
+def acc_score(y_pred, y):
+    y_pred = torch.round(y_pred.reshape(y_pred.shape[0], -1))
+    y = y.reshape(y.shape[0], -1)
+    score = accuracy_score(y, y_pred)
+    return score
 
 
 class Evaluator:
