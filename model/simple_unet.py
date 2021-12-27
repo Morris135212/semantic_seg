@@ -79,4 +79,4 @@ class Simple_Unet(torch.nn.Module):
         x = self.conv_t2_3(x)
 
         x = F.pad(x, (-16, -16, -1, -1))
-        return x
+        return torch.sigmoid(x)

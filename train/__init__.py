@@ -4,10 +4,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
-
 import transforms
 from data import CustomDataset
-from eval import Evaluator
+from eval import Evaluator, acc_score
 from utils.torchtools import EarlyStopping
 
 
@@ -60,15 +59,17 @@ class Trainer:
                 img, ground, weight = data
                 if self.include_weight:
                     weight = weight.to(self.device)
-                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=weight).to(self.device)
+                    criterion = torch.nn.BCELoss(weight=weight).to(self.device)
                 else:
-                    criterion = torch.nn.BCEWithLogitsLoss().to(self.device)
+                    criterion = torch.nn.BCELoss().to(self.device)
                 img = Variable(img.float()).to(self.device)
                 ground = Variable(ground.float()).to(self.device)
                 output = self.model(img)
                 output = output.view((output.shape[0], -1))
                 loss = criterion(output, ground)
-                epoch_loss += loss.item()*ground.shape[0]
+                score = acc_score(output, ground)
+                epoch_acc += score * ground.shape[0]
+                epoch_loss += loss.item() * ground.shape[0]
                 length += ground.shape[0]
 
                 self.optim.zero_grad()
@@ -76,16 +77,15 @@ class Trainer:
                 self.optim.step()
                 self.scheduler.step()
                 del img, ground
-                if i % self.interval == self.interval - 1:
-                    evaluator = Evaluator(val_loader=self.val_loader,
-                                          model=self.model,
-                                          device=self.device)
-                    results = evaluator()
-                    loss = results["loss"]
-                    print(f"train loss: {epoch_loss / length}, eval loss: {loss}", flush=True)
-                    self.early_stopping(loss, self.model)
+            if epoch % self.interval == self.interval - 1:
+                evaluator = Evaluator(val_loader=self.val_loader,
+                                      model=self.model,
+                                      device=self.device)
+                results = evaluator()
+                loss = results["loss"]
+                eval_acc = results["acc"]
+                print(f"train loss: {epoch_loss / length}, train accuracy: {epoch_acc/length}; eval loss: {loss}, "
+                      f"eval accuracy: {eval_acc}", flush=True)
+                self.early_stopping(loss, self.model)
             if self.early_stopping.early_stop:
                 break
-
-
-
