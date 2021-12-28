@@ -2,8 +2,7 @@ import torch.nn
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
-
+from model import weights_init
 import transforms
 from data import CustomDataset
 from eval import Evaluator, acc_score
@@ -15,6 +14,7 @@ class Trainer:
                  train: tuple,
                  val: tuple,
                  model,
+                 initialize=True,
                  batch_size=32,
                  epochs=10,
                  optimizer="adam",
@@ -36,6 +36,8 @@ class Trainer:
         # self.criterion = torch.nn.CrossEntropyLoss().to(device=self.device)
         # self.criterion = torch.nn.BCELoss().to(device=self.device)
         # Model
+        if initialize:
+            model.apply(weights_init)
         self.model = model.to(device=self.device)
         # Optimizer
         if optimizer == "adam":

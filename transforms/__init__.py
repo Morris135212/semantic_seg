@@ -32,12 +32,18 @@ class ToTensor(object):
         # Extract image as PyTorch tensor
         img = torch.from_numpy(img)
         img = img.permute(2, 0, 1)
-        ground = torch.from_numpy(ground)
+        try:
+            ground = torch.from_numpy(ground)
+        except Exception as e:
+            ground = None
         if len(data) == 3:
             weight = torch.from_numpy(weight)
             return img, ground, weight
         else:
-            return img, ground
+            if ground is not None:
+                return img, ground
+            else:
+                return img
 
 
 class ColorJitter:
@@ -105,10 +111,14 @@ class Pad:
             assert len(size) == 2
             self.w, self.h = size
         else:
-            self.w, self.h = None, None
+            self.w = None
+            self.h = None
 
     def __call__(self, data):
-        img, ground = data
+        try:
+            img, ground = data
+        except Exception as e:
+            img, ground = data, None
         if not self.w:
             self.w = self.h = max(img.shape[0], img.shape[1])
         img = img / 255
@@ -118,15 +128,15 @@ class Pad:
                                  (self.h - img.shape[1]) // 2,
                                  (self.h - img.shape[1]) - (self.h - img.shape[1]) // 2,
                                  cv2.BORDER_REFLECT)
-
-        ground = (255 - ground) / 255
-        ground = ground[:, :, 0].astype(np.uint8)
-        ground = cv2.copyMakeBorder(ground,
-                                    (self.w - ground.shape[0]) // 2,
-                                    (self.w - ground.shape[0]) - (self.w - ground.shape[0]) // 2,
-                                    (self.h - ground.shape[1]) // 2,
-                                    (self.h - ground.shape[1]) - (self.h - ground.shape[1]) // 2,
-                                    cv2.BORDER_REFLECT)
+        if ground is not None:
+            ground = (255 - ground) / 255
+            ground = ground[:, :, 0].astype(np.uint8)
+            ground = cv2.copyMakeBorder(ground,
+                                        (self.w - ground.shape[0]) // 2,
+                                        (self.w - ground.shape[0]) - (self.w - ground.shape[0]) // 2,
+                                        (self.h - ground.shape[1]) // 2,
+                                        (self.h - ground.shape[1]) - (self.h - ground.shape[1]) // 2,
+                                        cv2.BORDER_REFLECT)
         return img, ground
 
 
@@ -186,7 +196,7 @@ default_transform = {"train": transforms.Compose([
     Pad(size=(2302, 1632)),
     AddNoise(),
     Jitter(size=(2302, 1632), jitter_range=50),
-    AddPepperNoise(snr=0.98),
+    # AddPepperNoise(snr=0.98),
     ToTensor()
 ]),
     "val": transforms.Compose([
