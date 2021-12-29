@@ -85,6 +85,8 @@ class U_Net(nn.Module):
     # self.active = torch.nn.Sigmoid()
 
     def forward(self, x):
+        x = F.pad(x, (16, 16, 1, 1), "constant", 0)
+
         e1 = self.Conv1(x)
 
         e2 = self.Maxpool1(e1)
@@ -119,7 +121,7 @@ class U_Net(nn.Module):
         out = self.Conv(d2)
 
         # d1 = self.active(out)
-
+        out = F.pad(out, (-16, -16, -1, -1))
         return out
 
 

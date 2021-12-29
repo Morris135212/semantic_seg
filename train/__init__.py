@@ -61,9 +61,9 @@ class Trainer:
                 img, ground, weight = data
                 if self.include_weight:
                     weight = weight.to(self.device)
-                    criterion = torch.nn.BCELoss(weight=weight).to(self.device)
+                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=weight).to(self.device)
                 else:
-                    criterion = torch.nn.BCELoss().to(self.device)
+                    criterion = torch.nn.BCEWithLogitsLoss().to(self.device)
                 img = Variable(img.float()).to(self.device)
                 ground = Variable(ground.float()).to(self.device)
                 output = self.model(img)
