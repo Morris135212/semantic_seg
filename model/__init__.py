@@ -13,3 +13,4 @@ def weights_init(m):
     elif classname.find('Linear') != -1:
         print("Initialize Linear")
         nn.init.kaiming_normal_(m.weight)
+

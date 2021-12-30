@@ -58,7 +58,11 @@ class Trainer:
             length = 0
             for i, data in enumerate(tqdm(self.train_loader), 0):
                 self.model.train()
-                img, ground, weight = data
+                try:
+                    img, ground, weight = data
+                except:
+                    img, ground = data
+
                 if self.include_weight:
                     weight = weight.to(self.device)
                     criterion = torch.nn.BCEWithLogitsLoss(pos_weight=weight).to(self.device)
@@ -79,15 +83,16 @@ class Trainer:
                 self.optim.step()
                 self.scheduler.step()
                 del img, ground
-            if epoch % self.interval == self.interval - 1:
-                evaluator = Evaluator(val_loader=self.val_loader,
-                                      model=self.model,
-                                      device=self.device)
-                results = evaluator()
-                loss = results["loss"]
-                eval_acc = results["acc"]
-                print(f"train loss: {epoch_loss / length}, train accuracy: {epoch_acc/length}; eval loss: {loss}, "
-                      f"eval accuracy: {eval_acc}", flush=True)
-                self.early_stopping(loss, self.model)
+                if i % self.interval == self.interval - 1:
+                    evaluator = Evaluator(val_loader=self.val_loader,
+                                          model=self.model,
+                                          device=self.device,
+                                          include_weight=self.include_weight)
+                    results = evaluator()
+                    loss = results["loss"]
+                    eval_acc = results["acc"]
+                    print(f"train loss: {epoch_loss / length}, train accuracy: {epoch_acc / length}; "
+                          f"eval loss: {loss}, eval accuracy: {eval_acc}", flush=True)
+                    self.early_stopping(loss, self.model)
             if self.early_stopping.early_stop:
                 break

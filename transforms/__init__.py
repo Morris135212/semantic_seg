@@ -13,8 +13,9 @@ def calc_sample_weight(label, image):
     image = rgb2gray(image)
     around_texts = cv2.dilate((image < 0.5).astype(np.uint8) | label, np.ones((2, 2)))
     combined = around_texts + label
+    # combined = label
     class_counts = np.unique(combined, return_counts=True)[1]
-    class_weight = np.sum(class_counts) / class_counts * np.array([1, 1, 2])[:len(class_counts)]
+    class_weight = np.sum(class_counts) / class_counts * np.array([1, 2, 2])[:len(class_counts)]
     # class_weight = class_weight / np.max(class_weight)
     weights = np.vectorize(lambda x: class_weight[x])(combined).flatten()
     return weights, class_counts, class_weight
@@ -176,6 +177,15 @@ class Jitter:
         M = cv2.getPerspectiveTransform(pts1, pts2)
         img = cv2.warpPerspective(img, M, (self.size[1], self.size[0]), borderValue=(1, 1, 1))
         ground = cv2.warpPerspective(ground, M, (self.size[1], self.size[0]), flags=cv2.INTER_NEAREST, borderValue=0)
+        return img, ground
+
+
+class AddWeight:
+    def __init__(self):
+        pass
+
+    def __call__(self, data):
+        img, ground = data
         weight, _, _ = calc_sample_weight(ground, img)
         return img, ground, weight
 
@@ -196,10 +206,17 @@ default_transform = {"train": transforms.Compose([
     Pad(size=(2302, 1632)),
     AddNoise(),
     Jitter(size=(2302, 1632), jitter_range=50),
+    AddWeight(),
     # AddPepperNoise(snr=0.98),
     ToTensor()
 ]),
     "val": transforms.Compose([
         Pad(size=(2302, 1632)),
+        AddWeight(),
         ToTensor()
-    ])}
+    ]),
+    "test": transforms.Compose([
+        Pad(size=(2302, 1632)),
+        ToTensor()
+    ])
+}
