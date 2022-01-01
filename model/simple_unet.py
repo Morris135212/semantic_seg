@@ -14,9 +14,6 @@ class conv_block(nn.Module):
         self.conv = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=stride, padding=padding, bias=True),
             nn.BatchNorm2d(out_ch),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, stride=1, padding=padding, bias=True),
-            nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True)
         )
 
@@ -29,7 +26,7 @@ class conv_T_block(nn.Module):
     def __init__(self, in_ch, out_ch, stride=1, padding=1) -> None:
         super(conv_T_block, self).__init__()
         self.conv_t = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=in_ch, out_channels=out_ch, kernel_size=3, stride=stride, padding=padding),
+            nn.ConvTranspose2d(in_ch, out_ch, kernel_size=3, stride=stride, padding=padding),
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True))
 
@@ -52,7 +49,7 @@ class Simple_Unet(torch.nn.Module):
         self.conv_t2_2 = conv_T_block(18, 12)
 
         self.up2_3 = nn.Upsample(scale_factor=2)
-        self.conv_t2_3 = conv_T_block(15, out_ch)
+        self.Conv = nn.ConvTranspose2d(15, out_ch, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
         skips = []
@@ -74,7 +71,6 @@ class Simple_Unet(torch.nn.Module):
 
         x = self.up2_3(x)
         x = torch.cat((x, skips.pop()), dim=-3)
-        x = self.conv_t2_3(x)
-
+        x = self.Conv(x)
         x = F.pad(x, (-16, -16, -1, -1))
-        return x
+        return torch.sigmoid(x)
